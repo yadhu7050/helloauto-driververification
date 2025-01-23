@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        button {
+            padding: 8px 12px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            cursor: pointer;
+        }
+        button.reject {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Driver Verification Dashboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Driver Name</th>
+                <th>Email</th>
+                <th>Vehicle Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="driver-table">
+            
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchPendingDrivers() {
+            const response = await fetch('/api/drivers/pending');
+            const drivers = await response.json();
+            const tableBody = document.getElementById('driver-table');
+            tableBody.innerHTML = '';
+
+            drivers.forEach(driver => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${driver.fullname.firstname} ${driver.fullname.lastname}</td>
+                    <td>${driver.email}</td>
+                    <td>${driver.vehicle.vehicleType}</td>
+                    <td>
+                        <button onclick="updateVerification('${driver._id}', 'approved')">Approve</button>
+                        <button class="reject" onclick="updateVerification('${driver._id}', 'not approved')">Reject</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Update verification status
+        async function updateVerification(driverId, status) {
+            const response = await fetch(`/api/drivers/verify/${driverId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            if (response.ok) {
+                alert(`Driver verification ${status}`);
+                fetchPendingDrivers(); 
+            } else {
+                const error = await response.json();
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        
+        fetchPendingDrivers();
+    </script>
+</body>
+</html>
